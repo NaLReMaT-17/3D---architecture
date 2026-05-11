@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Изучение архитектуры компьютера</title>
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #eef2f5; }
+        
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
+        
+        .sidebar-left {
+            width: 260px;
+            background: #2d2d2d;
+            flex-shrink: 0;
+        }
+        .nav-item {
+            padding: 15px 25px;
+            cursor: pointer;
+            color: #ccc;
+            font-size: 18px;
+            border-left: 4px solid transparent;
+        }
+        .nav-item:hover, .nav-item.active {
+            background: #3d3d3d;
+            color: white;
+            border-left-color: #4caf50;
+        }
+        
+        .content-right {
+            flex: 1;
+            padding: 25px 35px;
+            background: #eef2f5;
+            overflow-y: auto;
+        }
+        
+        model-viewer {
+            width: 100%;
+            height: 450px;
+            background: #1e2a36;
+            border-radius: 12px;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        button {
+            background: #3498db;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 40px;
+            cursor: pointer;
+        }
+        button:hover { background: #2980b9; }
+        .component-btn { background: #27ae60; }
+        .reset-model-btn { background: #9b59b6; }
+        .quiz-btn { background: #e67e22; }
+        .clear-btn { background: #e74c3c; }
+        
+        .info-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 18px;
+            margin-top: 20px;
+            border-left: 5px solid #3498db;
+        }
+        
+        .student-form {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .form-row { display: flex; gap: 15px; flex-wrap: wrap; }
+        .form-group { flex: 1; }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        .quiz-question {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #e67e22;
+        }
+        .quiz-question label {
+            display: block;
+            margin: 5px 0 5px 20px;
+            cursor: pointer;
+        }
+        
+        .journal-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+        }
+        .journal-table th, .journal-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .journal-table th { background: #3498db; color: white; }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            color: #7f8c8d;
+        }
+        
+        @media (max-width: 800px) {
+            .app-container { flex-direction: column; }
+            .sidebar-left { width: 100%; display: flex; }
+            .nav-item { display: inline-block; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="sidebar-left">
+        <div class="nav-item active" data-page="main">Главная</div>
+        <div class="nav-item" data-page="quiz">Тестирование и журнал</div>
+    </div>
+    <div class="content-right" id="content-right"></div>
+</div>
+
+<script>
+    // Данные о компонентах (текст для информационной панели)
+    const components = {
+        cpu: "Процессор (CPU) - центральное устройство, выполняющее вычисления. Характеристики: тактовая частота (ГГц), количество ядер, кэш-память. Производители: Intel, AMD.",
+        ram: "Оперативная память (RAM) - временное хранение данных. Характеристики: объём (ГБ), частота (МГц), тип DDR4/DDR5.",
+        gpu: "Видеокарта (GPU) - обработка графики. Характеристики: объём видеопамяти (VRAM), частота ядра.",
+        motherboard: "Материнская плата - связывает все компоненты. Форм-фактор ATX, сокет, чипсет.",
+        psu: "Блок питания - преобразует напряжение 220В для питания компонентов. Мощность (Вт), сертификат 80+.",
+        ssd: "Накопители SSD/HDD - SSD быстрый для ОС, HDD ёмкий для файлов.",
+        cooler: "Система охлаждения - отводит тепло от процессора и видеокарты. Бывает воздушное и жидкостное."
+    };
+    
+    // ТОЛЬКО ТЕ МОДЕЛИ, КОТОРЫЕ РЕАЛЬНО СУЩЕСТВУЮТ В ПАПКЕ
+    // Остальные кнопки будут показывать основную модель md.glb
+    const modelFiles = {
+        motherboard: "mat.glb",    // Мат. плата
+        gpu: "vid.glb",            // Видеокарта
+        psu: "block.glb"           // Блок питания
+        // Для cpu, ram, ssd, cooler файлов пока нет → будут показывать md.glb
+    };
+    
+    const MAIN_MODEL = "md.glb";
+
+    // Вопросы теста
+    const questions = [
+        { text: "Что такое CPU?", options: ["Процессор", "Память", "Видеокарта", "Блок питания"], correct: 0 },
+        { text: "Для чего нужна оперативная память?", options: ["Хранение файлов", "Временные данные", "Графика", "Питание"], correct: 1 },
+        { text: "Что измеряется в ГГц у процессора?", options: ["Кэш", "Ядра", "Тактовая частота", "Техпроцесс"], correct: 2 },
+        { text: "Какая память теряет данные при выключении?", options: ["SSD", "HDD", "ROM", "RAM"], correct: 3 },
+        { text: "Форм-фактор материнской платы?", options: ["ATX", "USB", "PCIe", "SATA"], correct: 0 },
+        { text: "Что такое SSD?", options: ["Solid State Drive", "Жёсткий диск", "Оперативка", "Процессор"], correct: 0 },
+        { text: "NVIDIA RTX 4080 - это?", options: ["Процессор", "Память", "Видеокарта", "Блок питания"], correct: 2 },
+        { text: "Что означает TDP?", options: ["Тепловая мощность", "Частота", "Напряжение", "Объём"], correct: 0 },
+        { text: "Самый быстрый интерфейс для SSD?", options: ["SATA", "USB", "NVMe M.2", "IDE"], correct: 2 },
+        { text: "Сертификат 80+ Gold означает?", options: ["Мощность", "Эффективность", "Шум", "Модульность"], correct: 1 },
+        { text: "Сокет - это?", options: ["Разъём для CPU", "Слот ОЗУ", "Порт USB", "Разъём питания"], correct: 0 },
+        { text: "Ryzen производит?", options: ["Intel", "AMD", "NVIDIA", "Apple"], correct: 1 },
+        { text: "Что НЕ входит в системный блок?", options: ["Монитор", "Блок питания", "Кулер", "Плата"], correct: 0 },
+        { text: "Рекомендуемый объём ОЗУ для игр?", options: ["4 ГБ", "8 ГБ", "16 ГБ", "32 ГБ"], correct: 2 },
+        { text: "Кэш-память - это?", options: ["Внешний диск", "Внутренняя быстрая память", "Виртуалка", "Память GPU"], correct: 1 },
+        { text: "Интерфейс видеокарты?", options: ["PCI Express", "SATA", "USB", "HDMI"], correct: 0 },
+        { text: "Что влияет на скорость SSD?", options: ["Тип памяти", "Интерфейс", "DRAM-кэш", "Всё вместе"], correct: 3 },
+        { text: "Чипсет отвечает за?", options: ["Звук", "Связь CPU с периферией", "Сеть", "Питание"], correct: 1 },
+        { text: "Функция блока питания?", options: ["Преобразование тока", "Ускорение", "Охлаждение", "Хранение"], correct: 0 },
+        { text: "Для архива фото лучше?", options: ["SSD NVMe", "SSD SATA", "HDD", "RAM"], correct: 2 }
+    ];
+
+    // Журнал
+    let journal = [];
+    function saveJournal() { localStorage.setItem('journal', JSON.stringify(journal)); renderJournal(); }
+    function renderJournal() {
+        const tbody = document.getElementById('journal-body');
+        if(!tbody) return;
+        if(journal.length === 0) { tbody.innerHTML = '<tr><td colspan="4">Нет результатов</td></tr>'; return; }
+        tbody.innerHTML = journal.map(e => `<tr><td>${e.date}</td><td>${e.score}/${e.total}</td><td>${e.percent}%</td><td>${e.fio} (${e.group})</td></tr>`).join('');
+    }
+    function addResult(score, total, percent, fio, group) {
+        journal.unshift({ date: new Date().toLocaleString(), score, total, percent, fio, group });
+        if(journal.length > 30) journal.pop();
+        saveJournal();
+    }
+    function clearJournal() { if(confirm('Очистить журнал?')) { journal = []; saveJournal(); } }
+
+    let student = { fio: '', group: '' };
+    function updateStudentDisplay() {
+        const div = document.getElementById('student-display');
+        if(div) div.innerHTML = student.fio && student.group ? `Студент: ${student.fio} (${student.group})` : 'Введите ФИО и группу';
+    }
+
+    function buildTest() {
+        let html = '';
+        questions.forEach((q, i) => {
+            html += `<div class="quiz-question"><p>${i+1}. ${q.text}</p>`;
+            q.options.forEach((opt, oi) => {
+                html += `<label><input type="radio" name="q${i}" value="${oi}"> ${opt}</label>`;
+            });
+            html += `</div>`;
+        });
+        document.getElementById('test-container').innerHTML = html;
+    }
+
+    function submitTest() {
+        if(!student.fio || !student.group) {
+            alert('Введите ФИО и группу');
+            return;
+        }
+        let score = 0;
+        for(let i = 0; i < questions.length; i++) {
+            const selected = document.querySelector(`input[name="q${i}"]:checked`);
+            if(selected && parseInt(selected.value) === questions[i].correct) score++;
+        }
+        const percent = Math.round(score / questions.length * 100);
+        addResult(score, questions.length, percent, student.fio, student.group);
+        alert(`Результат: ${score} из ${questions.length} (${percent}%)`);
+        document.querySelector('.journal-section')?.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    let currentViewer = null;
+    let currentModelSrc = MAIN_MODEL;
+    
+    function changeModel(modelFile) {
+        if(currentViewer && modelFile !== currentModelSrc) {
+            currentModelSrc = modelFile;
+            currentViewer.src = modelFile;
+        }
+    }
+    
+    function resetToMainModel() {
+        changeModel(MAIN_MODEL);
+        const infoPanel = document.getElementById('infoPanel');
+        if(infoPanel) {
+            infoPanel.innerHTML = '<strong>Режим обучения:</strong> Показан общий вид системного блока. Нажимайте на кнопки компонентов, чтобы изучить их подробнее.';
+        }
+    }
+
+    function showMain() {
+        document.getElementById('content-right').innerHTML = `
+            <h1>Изучаем архитектуру компьютера</h1>
+            <model-viewer id="viewer" src="${MAIN_MODEL}" camera-controls auto-rotate shadow-intensity="1"></model-viewer>
+            <div class="controls">
+                <button id="reset-view">Сбросить вид</button>
+                <button id="reset-model" class="reset-model-btn">Обратно</button>
+                <button class="component-btn" data-comp="cpu">Процессор</button>
+                <button class="component-btn" data-comp="ram">ОЗУ</button>
+                <button class="component-btn" data-comp="gpu">Видеокарта</button>
+                <button class="component-btn" data-comp="motherboard">Мат. плата</button>
+                <button class="component-btn" data-comp="psu">Блок питания</button>
+                <button class="component-btn" data-comp="ssd">SSD/HDD</button>
+                <button class="component-btn" data-comp="cooler">Охлаждение</button>
+            </div>
+            <div class="info-panel" id="infoPanel"><strong>Режим обучения:</strong> Вращайте модель, нажимайте на кнопки компонентов. Кнопка "Показать всю сборку" возвращает общий вид.</div>
+            <footer>Тувинский государственный университет | 1_tuva_1@mail.ru</footer>
+        `;
+        
+        currentViewer = document.getElementById('viewer');
+        currentModelSrc = MAIN_MODEL;
+        
+        document.getElementById('reset-view')?.addEventListener('click', () => {
+            if(currentViewer) {
+                currentViewer.cameraOrbit = '0deg 75deg auto';
+                currentViewer.cameraTarget = 'auto auto auto';
+            }
+        });
+        
+        document.getElementById('reset-model')?.addEventListener('click', resetToMainModel);
+        
+        document.querySelectorAll('.component-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const comp = btn.dataset.comp;
+                document.getElementById('infoPanel').innerHTML = components[comp] || 'Информация о компоненте';
+                
+                // Проверяем, есть ли отдельная модель для этого компонента
+                if(modelFiles[comp]) {
+                    changeModel(modelFiles[comp]);
+                } else {
+                    // Если нет отдельной модели - показываем основную сборку
+                    changeModel(MAIN_MODEL);
+                }
+            });
+        });
+    }
+
+    function showQuiz() {
+        document.getElementById('content-right').innerHTML = `
+            <h1>Тестирование и журнал</h1>
+            
+            <div class="student-form">
+                <h3>Информация о студенте</h3>
+                <div class="form-row">
+                    <div class="form-group"><input type="text" id="fio" placeholder="ФИО"></div>
+                    <div class="form-group"><input type="text" id="group" placeholder="Группа"></div>
+                    <div class="form-group"><button id="save-student" style="margin-top:0">Сохранить</button></div>
+                </div>
+                <div id="student-display" style="margin-top:10px; padding:8px; background:#e8f0fe; border-radius:8px;"></div>
+            </div>
+            
+            <div class="student-form">
+                <h3>Тест (20 вопросов)</h3>
+                <div id="test-container"></div>
+                <button id="submit-test" class="quiz-btn" style="margin-top:15px">Завершить тест</button>
+            </div>
+            
+            <div class="student-form journal-section">
+                <h3>Журнал результатов</h3>
+                <table class="journal-table">
+                    <thead><tr><th>Дата</th><th>Баллы</th><th>Процент</th><th>Студент</th></tr></thead>
+                    <tbody id="journal-body"><tr><td colspan="4">Нет результатов</td></tr></tbody>
+                </table>
+                <button id="clear-journal" class="clear-btn" style="margin-top:15px">Очистить журнал</button>
+            </div>
+            
+            <footer>Тувинский государственный университет | 1_tuva_1@mail.ru</footer>
+        `;
+        
+        buildTest();
+        updateStudentDisplay();
+        
+        document.getElementById('save-student')?.addEventListener('click', () => {
+            student.fio = document.getElementById('fio').value;
+            student.group = document.getElementById('group').value;
+            updateStudentDisplay();
+            alert('Данные сохранены');
+        });
+        document.getElementById('submit-test')?.addEventListener('click', submitTest);
+        document.getElementById('clear-journal')?.addEventListener('click', clearJournal);
+        renderJournal();
+    }
+
+    const saved = localStorage.getItem('journal');
+    if(saved) journal = JSON.parse(saved);
+
+    function navigate(page) {
+        if(page === 'main') showMain();
+        else if(page === 'quiz') showQuiz();
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.toggle('active', item.dataset.page === page);
+        });
+    }
+
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => navigate(item.dataset.page));
+    });
+    
+    navigate('main');
+</script>
+</body>
+</html>
