@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Изучение архитектуры компьютера</title>
+    <title>Архитектура компьютера с использованием технологии 3D-просмотра</title>
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -142,7 +142,7 @@
 </div>
 
 <script>
-    // Данные о компонентах (текст для информационной панели)
+    // Данные о компонентах 
     const components = {
         cpu: "Процессор (CPU) - центральное устройство, выполняющее вычисления. Характеристики: тактовая частота (ГГц), количество ядер, кэш-память. Производители: Intel, AMD.",
         ram: "Оперативная память (RAM) - временное хранение данных. Характеристики: объём (ГБ), частота (МГц), тип DDR4/DDR5.",
@@ -152,19 +152,20 @@
         ssd: "Накопители SSD/HDD - SSD быстрый для ОС, HDD ёмкий для файлов.",
         cooler: "Система охлаждения - отводит тепло от процессора и видеокарты. Бывает воздушное и жидкостное."
     };
-    
-    // ТОЛЬКО ТЕ МОДЕЛИ, КОТОРЫЕ РЕАЛЬНО СУЩЕСТВУЮТ В ПАПКЕ
-    // Остальные кнопки будут показывать основную модель md.glb
+
     const modelFiles = {
-        motherboard: "mat.glb",    // Мат. плата
-        gpu: "vid.glb",            // Видеокарта
-        psu: "block.glb"           // Блок питания
-        // Для cpu, ram, ssd, cooler файлов пока нет → будут показывать md.glb
+        cpu: "pro.glb",           // Процессор
+        ram: "ddr.glb",           // Оперативная память (новый файл)
+        gpu: "vid.glb",           // Видеокарта
+        motherboard: "mat.glb",   // Материнская плата
+        psu: "block.glb",         // Блок питания
+        ssd: "ssd.glb",           // SSD/HDD (новый файл)
+        cooler: "cooler.glb"      // Охлаждение (новый файл)
     };
     
     const MAIN_MODEL = "md.glb";
 
-    // Вопросы теста
+    // Вопросы
     const questions = [
         { text: "Что такое CPU?", options: ["Процессор", "Память", "Видеокарта", "Блок питания"], correct: 0 },
         { text: "Для чего нужна оперативная память?", options: ["Хранение файлов", "Временные данные", "Графика", "Питание"], correct: 1 },
@@ -291,12 +292,10 @@
             btn.addEventListener('click', () => {
                 const comp = btn.dataset.comp;
                 document.getElementById('infoPanel').innerHTML = components[comp] || 'Информация о компоненте';
-                
-                // Проверяем, есть ли отдельная модель для этого компонента
+
                 if(modelFiles[comp]) {
                     changeModel(modelFiles[comp]);
                 } else {
-                    // Если нет отдельной модели - показываем основную сборку
                     changeModel(MAIN_MODEL);
                 }
             });
