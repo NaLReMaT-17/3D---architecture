@@ -7,7 +7,7 @@
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #eef2f5; }
+        body { font-family: 'Times New Roman', sans-serif; background: #eef2f5; }
         
         .app-container {
             display: flex;
@@ -24,7 +24,7 @@
             padding: 15px 25px;
             cursor: pointer;
             color: #ccc;
-            font-size: 18px;
+            font-size: 24px;
             border-left: 4px solid transparent;
         }
         .nav-item:hover, .nav-item.active {
@@ -58,10 +58,13 @@
             background: #3498db;
             border: none;
             color: white;
-            padding: 8px 16px;
+            padding: 14px 28px;
             border-radius: 40px;
             cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: 600;
         }
+
         button:hover { background: #2980b9; }
         .component-btn { background: #27ae60; }
         .reset-model-btn { background: #9b59b6; }
@@ -74,6 +77,8 @@
             padding: 18px;
             margin-top: 20px;
             border-left: 5px solid #3498db;
+            font-size: 1.6rem;
+            line-height: 1.4;
         }
         
         .student-form {
@@ -81,6 +86,7 @@
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 20px;
+            font-size: 24px;
         }
         .form-row { display: flex; gap: 15px; flex-wrap: wrap; }
         .form-group { flex: 1; }
@@ -97,6 +103,7 @@
             border-radius: 10px;
             margin-bottom: 15px;
             border-left: 4px solid #e67e22;
+            font-size: 20px;
         }
         .quiz-question label {
             display: block;
@@ -142,7 +149,6 @@
 </div>
 
 <script>
-    // Данные о компонентах 
     const components = {
         cpu: "Процессор (CPU) - центральное устройство, выполняющее вычисления. Характеристики: тактовая частота (ГГц), количество ядер, кэш-память. Производители: Intel, AMD.",
         ram: "Оперативная память (RAM) - временное хранение данных. Характеристики: объём (ГБ), частота (МГц), тип DDR4/DDR5.",
@@ -155,12 +161,12 @@
 
     const modelFiles = {
         cpu: "pro.glb",           // Процессор
-        ram: "ddr.glb",           // Оперативная память (новый файл)
+        ram: "ddr.glb",           // Оперативная память
         gpu: "vid.glb",           // Видеокарта
         motherboard: "mat.glb",   // Материнская плата
         psu: "block.glb",         // Блок питания
-        ssd: "ssd.glb",           // SSD/HDD (новый файл)
-        cooler: "cooler.glb"      // Охлаждение (новый файл)
+        ssd: "ssd.glb",           // SSD/HDD
+        cooler: "cooler.glb"      // Охлаждение
     };
     
     const MAIN_MODEL = "md.glb";
@@ -253,7 +259,7 @@
         changeModel(MAIN_MODEL);
         const infoPanel = document.getElementById('infoPanel');
         if(infoPanel) {
-            infoPanel.innerHTML = '<strong>Режим обучения:</strong> Показан общий вид системного блока. Нажимайте на кнопки компонентов, чтобы изучить их подробнее.';
+            infoPanel.innerHTML = '<div><strong>Режим обучения:</strong></div><div>Показан общий вид системного блока. Нажимайте на кнопки компонентов, чтобы изучить их подробнее.</div>';
         }
     }
 
@@ -272,7 +278,10 @@
                 <button class="component-btn" data-comp="ssd">SSD/HDD</button>
                 <button class="component-btn" data-comp="cooler">Охлаждение</button>
             </div>
-            <div class="info-panel" id="infoPanel"><strong>Режим обучения:</strong> Вращайте модель, нажимайте на кнопки компонентов. Кнопка "Показать всю сборку" возвращает общий вид.</div>
+            <div class="info-panel" id="infoPanel">
+                <strong style="display: block; margin-bottom: 10px;">Режим обучения:</strong>
+                Вращайте модель, нажимайте на кнопки компонентов. Кнопка "Показать всю сборку" возвращает общий вид.
+            </div>
             <footer>Тувинский государственный университет | 1_tuva_1@mail.ru</footer>
         `;
         
@@ -317,7 +326,7 @@
             </div>
             
             <div class="student-form">
-                <h3>Тест (20 вопросов)</h3>
+                <h3>Тест</h3>
                 <div id="test-container"></div>
                 <button id="submit-test" class="quiz-btn" style="margin-top:15px">Завершить тест</button>
             </div>
